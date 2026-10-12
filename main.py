@@ -1,0 +1,169 @@
+
+# =====================================
+# PROJECT PEMESANAN ONLINE
+# Bahasa Pemrograman: Python
+# =====================================
+
+import json
+from datetime import datetime
+
+# Daftar produk
+produk = {
+    1: {"nama": "Nasi Goreng", "harga": 15000},
+    2: {"nama": "Mie Ayam", "harga": 12000},
+    3: {"nama": "Ayam Geprek", "harga": 18000},
+    4: {"nama": "Es Teh", "harga": 5000},
+    5: {"nama": "Jus Alpukat", "harga": 10000}
+}
+
+
+def tampilkan_produk():
+    print("\n========== DAFTAR MENU ==========")
+
+    for nomor, item in produk.items():
+        print(
+            f"{nomor}. {item['nama']} "
+            f"- Rp{item['harga']:,}"
+        )
+
+
+def pesan_produk():
+    keranjang = []
+
+    while True:
+        tampilkan_produk()
+
+        pilihan = input(
+            "\nMasukkan nomor produk (0 untuk selesai): "
+        )
+
+        if not pilihan.isdigit():
+            print("Input harus berupa angka!")
+            continue
+
+        nomor = int(pilihan)
+
+        if nomor == 0:
+            break
+
+        if nomor not in produk:
+            print("Produk tidak ditemukan!")
+            continue
+
+        jumlah_input = input("Masukkan jumlah: ")
+
+        if not jumlah_input.isdigit():
+            print("Jumlah harus berupa angka!")
+            continue
+
+        jumlah = int(jumlah_input)
+
+        if jumlah <= 0:
+            print("Jumlah harus lebih dari 0!")
+            continue
+
+        item = produk[nomor]
+
+        keranjang.append({
+            "nama": item["nama"],
+            "harga": item["harga"],
+            "jumlah": jumlah,
+            "subtotal": item["harga"] * jumlah
+        })
+
+        print(f"{item['nama']} berhasil ditambahkan!")
+
+    return keranjang
+
+
+def hitung_total(keranjang):
+    total = 0
+
+    for item in keranjang:
+        total += item["subtotal"]
+
+    return total
+
+
+def simpan_pesanan(data):
+    try:
+        with open(
+            "pesanan.json", "r", encoding="utf-8"
+        ) as file:
+            semua_pesanan = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        semua_pesanan = []
+
+    semua_pesanan.append(data)
+
+    with open(
+        "pesanan.json", "w", encoding="utf-8"
+    ) as file:
+        json.dump(
+            semua_pesanan,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+
+def cetak_struk(nama, alamat, keranjang, total):
+    print("\n========== STRUK PESANAN ==========")
+    print(f"Nama pembeli : {nama}")
+    print(f"Alamat       : {alamat}")
+    print(f"Waktu        : {datetime.now():%d-%m-%Y %H:%M}")
+    print("-----------------------------------")
+
+    for item in keranjang:
+        print(
+            f"{item['nama']} x{item['jumlah']} "
+            f"= Rp{item['subtotal']:,}"
+        )
+
+    print("-----------------------------------")
+    print(f"TOTAL BAYAR  : Rp{total:,}")
+    print("Status       : Menunggu pembayaran")
+    print("===================================")
+
+
+def main():
+    print("===================================")
+    print("      ONLINE ORDER SYSTEM")
+    print("===================================")
+
+    nama = input("Masukkan nama pembeli: ").strip()
+    alamat = input("Masukkan alamat pengiriman: ").strip()
+
+    if not nama or not alamat:
+        print("Nama dan alamat wajib diisi!")
+        return
+
+    keranjang = pesan_produk()
+
+    if not keranjang:
+        print("Pesanan kosong. Terima kasih!")
+        return
+
+    total = hitung_total(keranjang)
+
+    cetak_struk(nama, alamat, keranjang, total)
+
+    data_pesanan = {
+        "nama": nama,
+        "alamat": alamat,
+        "waktu": datetime.now().strftime(
+            "%d-%m-%Y %H:%M"
+        ),
+        "produk": keranjang,
+        "total": total,
+        "status": "Menunggu pembayaran"
+    }
+
+    simpan_pesanan(data_pesanan)
+
+    print("\nPesanan berhasil disimpan!")
+    print("Data tersimpan di file pesanan.json")
+
+
+if __name__ == "__main__":
+    main()
